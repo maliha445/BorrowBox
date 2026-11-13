@@ -280,13 +280,29 @@
 
         <nav>
             <a href="{{ url('/') }}">Home</a>
-            <a href="#categories">Categories</a>
-            <a href="#items">Browse Items</a>
+            <a href="{{ route('items.index') }}">Browse Items</a>
             <a href="{{ route('items.create') }}" class="add-item">
                 + Add Item
             </a>
             @auth
-                <span style="font-size: 14px; color: #27845a; font-weight: bold;"> {{ auth()->user()->name }}</span>
+                <a href="{{ route('dashboard') }}">Dashboard</a>
+                <a href="{{ route('history') }}">History</a>
+                <a href="{{ route('notifications.index') }}" title="Notifications" style="text-decoration: none; font-size: 16px;">
+                    🔔
+                    @php $unreadCount = auth()->user()->unreadNotifications->count(); @endphp
+                    @if ($unreadCount > 0)
+                        <span style="background: #e53935; color: white; border-radius: 10px; font-size: 11px; font-weight: bold; padding: 1px 6px;">{{ $unreadCount }}</span>
+                    @endif
+                </a>
+                @if (auth()->user()->isAdmin())
+                    <a href="{{ route('admin.dashboard') }}" style="color: #512da8; font-weight: bold;">🛡️ Admin</a>
+                @endif
+                <a href="{{ route('profile.show') }}" style="font-size: 14px; color: #27845a; font-weight: bold;">
+                    👤 {{ auth()->user()->name }}
+                    @if (auth()->user()->isVerified())
+                        <span style="background: #e7f8ed; color: #176b37; border-radius: 10px; font-size: 10px; padding: 2px 6px; border: 1px solid #b6e9c6;">✓ Verified</span>
+                    @endif
+                </a>
                 <form action="{{ route('logout') }}" method="POST" style="display:inline; margin: 0;">
                     @csrf
                     <button type="submit" style="background:none; border:none; color:#c62828; padding:0; font-size:14px; cursor:pointer; font-weight:bold;">Logout</button>
@@ -401,30 +417,38 @@
 
                 <div class="item">
 
-                    <div class="item-image">
-                        @php $cat = strtolower($item->category); @endphp
-                        @if (str_contains($cat, 'book'))
-                            📚
-                        @elseif (str_contains($cat, 'calc'))
-                            🧮
-                        @elseif (str_contains($cat, 'electr'))
-                            💻
-                        @elseif (str_contains($cat, 'note') || str_contains($cat, 'study'))
-                            📝
-                        @elseif (str_contains($cat, 'lab'))
-                            🔬
-                        @elseif (str_contains($cat, 'sport'))
-                            ⚽
-                        @elseif (str_contains($cat, 'station'))
-                            ✏️
+                    <div class="item-image" style="{{ $item->image ? 'overflow: hidden; background: white;' : '' }}">
+                        @if ($item->image)
+                            <img src="{{ asset($item->image) }}" alt="{{ $item->item_name }}" style="width: 100%; height: 100%; object-fit: cover;">
                         @else
-                            🎒
+                            @php $cat = strtolower($item->category); @endphp
+                            @if (str_contains($cat, 'book'))
+                                📚
+                            @elseif (str_contains($cat, 'calc'))
+                                🧮
+                            @elseif (str_contains($cat, 'electr'))
+                                💻
+                            @elseif (str_contains($cat, 'note') || str_contains($cat, 'study') || str_contains($cat, 'lecture'))
+                                📝
+                            @elseif (str_contains($cat, 'lab'))
+                                🔬
+                            @elseif (str_contains($cat, 'sport'))
+                                ⚽
+                            @elseif (str_contains($cat, 'station'))
+                                ✏️
+                            @else
+                                🎒
+                            @endif
                         @endif
                     </div>
 
                     <div class="item-info">
 
-                        <h3>{{ $item->item_name }}</h3>
+                        <h3>
+                            <a href="{{ route('items.show', $item) }}" style="color: inherit; text-decoration: none;">
+                                {{ $item->item_name }}
+                            </a>
+                        </h3>
 
                         <p>{{ $item->description }}</p>
 
@@ -448,9 +472,14 @@
                             Shared by: {{ $item->owner_name }}
                         </span>
 
-                        <span class="owner">
-                            🎁 Listing reward: {{ $item->reward_coins }} coins
-                        </span>
+                        <div style="margin-top: 12px; display: flex; justify-content: space-between; align-items: center;">
+                            <span style="font-size: 13px; color: #267653; font-weight: bold;">
+                                🎁 {{ $item->reward_coins }} coins
+                            </span>
+                            <a href="{{ route('items.show', $item) }}" style="background: #f0f8f3; color: #27845a; border: 1px solid #c2ebd1; padding: 6px 12px; border-radius: 6px; font-size: 13px; font-weight: bold; text-decoration: none;">
+                                View Details &rarr;
+                            </a>
+                        </div>
 
                     </div>
                 </div>

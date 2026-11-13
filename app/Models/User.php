@@ -5,6 +5,7 @@ namespace App\Models;
 // use Illuminate\Contracts\Auth\MustVerifyEmail;
 use Database\Factories\UserFactory;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
+use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
 
@@ -22,6 +23,12 @@ class User extends Authenticatable
         'name',
         'email',
         'password',
+        'student_id',
+        'phone',
+        'id_card_image',
+        'is_verified',
+        'role',
+        'status',
     ];
 
     /**
@@ -44,6 +51,62 @@ class User extends Authenticatable
         return [
             'email_verified_at' => 'datetime',
             'password' => 'hashed',
+            'is_verified' => 'boolean',
         ];
+    }
+
+    public function isAdmin(): bool
+    {
+        return $this->role === 'admin';
+    }
+
+    public function isVerified(): bool
+    {
+        return (bool) $this->is_verified;
+    }
+
+    public function isActive(): bool
+    {
+        return $this->status === 'active';
+    }
+
+    public function isSuspended(): bool
+    {
+        return $this->status === 'suspended';
+    }
+
+    public function items(): HasMany
+    {
+        return $this->hasMany(Item::class);
+    }
+
+    public function borrowRequests(): HasMany
+    {
+        return $this->hasMany(BorrowRequest::class, 'borrower_id');
+    }
+
+    public function incomingRequests(): HasMany
+    {
+        return $this->hasMany(BorrowRequest::class, 'owner_id');
+    }
+
+    public function reviewsReceived(): HasMany
+    {
+        return $this->hasMany(Review::class, 'reviewee_id');
+    }
+
+    public function reviewsGiven(): HasMany
+    {
+        return $this->hasMany(Review::class, 'reviewer_id');
+    }
+
+    public function averageRating(): float
+    {
+        return (float) ($this->reviewsReceived()->avg('rating') ?? 0);
+    }
+
+    public function reportsReceived(): HasMany
+    {
+        return $this->hasMany(Report::class, 'reported_user_id');
     }
 }
